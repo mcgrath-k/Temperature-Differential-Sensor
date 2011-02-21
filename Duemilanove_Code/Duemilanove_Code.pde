@@ -9,13 +9,11 @@
 int gTempCmd  = 0b00000011;
 int gHumidCmd = 0b00000101;
 
-int shiftIn(int dataPin, int clockPin, int numBits)
-{
+int shiftIn(int dataPin, int clockPin, int numBits) {
   int ret = 0;
   int i;
 
-  for (i=0; i<numBits; ++i)
-  {
+  for (i=0; i<numBits; ++i) {
     digitalWrite(clockPin, HIGH);
     delay(10);  // I don't know why I need this, but without it I don't get my 8 lsb of temp
     ret = ret*2 + digitalRead(dataPin);
@@ -25,8 +23,7 @@ int shiftIn(int dataPin, int clockPin, int numBits)
   return(ret);
 }
 
-void sendCommandSHT(int command, int dataPin, int clockPin)
-{
+void sendCommandSHT(int command, int dataPin, int clockPin) {
   int ack;
 
   // Transmission Start
@@ -47,36 +44,37 @@ void sendCommandSHT(int command, int dataPin, int clockPin)
   digitalWrite(clockPin, HIGH);
   pinMode(dataPin, INPUT);
   ack = digitalRead(dataPin);
-  if (ack != LOW)
+  if (ack != LOW) {
     Serial.println("Ack Error 0");
+  }
   digitalWrite(clockPin, LOW);
   ack = digitalRead(dataPin);
-  if (ack != HIGH)
+  if (ack != HIGH) {
     Serial.println("Ack Error 1");
+  }
 }
 
-void waitForResultSHT(int dataPin)
-{
+void waitForResultSHT(int dataPin) {
   int i;
   int ack;
 
   pinMode(dataPin, INPUT);
 
-  for(i= 0; i < 100; ++i)
-  {
+  for(i= 0; i < 100; ++i) {
     delay(10);
     ack = digitalRead(dataPin);
 
-    if (ack == LOW)
+    if (ack == LOW) {
       break;
+    }
   }
 
-  if (ack == HIGH)
+  if (ack == HIGH) {
     Serial.println("Ack Error 2");
+  }
 }
 
-int getData16SHT(int dataPin, int clockPin)
-{
+int getData16SHT(int dataPin, int clockPin) {
   int val;
 
   // Get the most significant bits
@@ -99,8 +97,7 @@ int getData16SHT(int dataPin, int clockPin)
   return val;
 }
 
-void skipCrcSHT(int dataPin, int clockPin)
-{
+void skipCrcSHT(int dataPin, int clockPin) {
   // Skip acknowledge to end trans (no CRC)
   pinMode(dataPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -110,16 +107,14 @@ void skipCrcSHT(int dataPin, int clockPin)
   digitalWrite(clockPin, LOW);
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
   vw_set_ptt_inverted(true);
   vw_setup(2000);
   vw_set_tx_pin(3);
 }
 
-void loop()
-{
+void loop() {
   int theDataPin  = 10;
   int theClockPin = 11;
   char cmd = 0;
