@@ -124,6 +124,8 @@ void loop() {
 
   int val;
   int temp;
+  int hval;
+  int humid;
   
   sendCommandSHT(gTempCmd, theDataPin, theClockPin);
   waitForResultSHT(theDataPin);
@@ -134,7 +136,7 @@ void loop() {
   Serial.print(temp, DEC);
   const char *msgT ="t";
   vw_send((uint8_t *)msgT, strlen(msgT));
-  vw_wait_tx;
+  vw_wait_tx();
   
   delay(500);
   
@@ -144,5 +146,26 @@ void loop() {
   vw_send((uint8_t *)msg, strlen(msg)); 
   vw_wait_tx();
    
+  delay(1000);
+  
+  sendCommandSHT(gHumidCmd, theDataPin, theClockPin);
+  waitForResultSHT(theDataPin);
+  val = getData16SHT(theDataPin, theClockPin);
+  skipCrcSHT(theDataPin, theClockPin);
+  humid = -4.0 + 0.0405 * val + -0.0000028 * val * val;
+  Serial.print("h");
+  Serial.print(humid, DEC);
+  const char *msgH ="h";
+  vw_send((uint8_t *)msgH, strlen(msgH));
+  vw_wait_tx();
+  
+  delay(500);
+  
+  msg[0] = byte(humid);
+  msg[1] = '\0';
+  
+  vw_send((uint8_t *)msg, strlen(msg));
+  vw_wait_tx();
+  
   delay(1000);
 }

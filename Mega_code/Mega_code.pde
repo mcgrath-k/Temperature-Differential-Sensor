@@ -14,6 +14,8 @@
 int inByte = 0;
 char firstRead = 0;
 int inValue = -1;
+int readTemp = -1;
+int readHumid = -1;
 
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
@@ -36,7 +38,7 @@ int shiftIn(int dataPin, int clockPin, int numBits) {
   int ret = 0;
   int i;
 
-  for (i=0; i<numBits2; ++i) {
+  for (i=0; i<numBits; ++i) {
     digitalWrite(clockPin, HIGH);
     delay(10);  // I don't know why I need this, but without it I don't get my 8 lsb of temp
     ret = ret*2 + digitalRead(dataPin);
@@ -144,8 +146,9 @@ void loop(){
     int i;
     for (i = 0; i < buflen; i++) {
       inByte = buf[i];
+      char inChar = (char) inByte;
 
-      if (inByte < 0x30 || inByte > 0x39) {
+      if (inChar == 't' || inChar == 'h') {
         int theDataPin   = 2;
         int theClockPin  = 3;
         char cmd = 0;
@@ -154,6 +157,12 @@ void loop(){
         int temp;
         int hval;
         int humid;
+        
+        if (inChar == 't') {
+          readTemp = inValue;
+        } else {
+          readHumid = inValue;
+        }
 
         sendCommandSHT(gTempCmd, theDataPin, theClockPin);
         waitForResultSHT(theDataPin);
@@ -165,9 +174,9 @@ void loop(){
         Serial.print("  ");
         Serial.println(temp, DEC);         
         Serial.print("Outside Temp (temp2) is:");
-        Serial.print(inValue, HEX);
+        Serial.print(readTemp, HEX);
         Serial.print("  ");
-        Serial.println(inValue, DEC);
+        Serial.println(readTemp, DEC);
         //The statements that control the lcd.
         lcd.setCursor (0, 0);
 
@@ -177,27 +186,27 @@ void loop(){
         lcd.print("F ");
 
         lcd.print("Outer Temp is ");
-        lcd.print(inValue, DEC);
+        lcd.print(readTemp, DEC);
         lcd.write(0);
         lcd.print("F  ");
 
         // The statements that control which led turns on: red, blue, or green.
         //RED
-        if (inValue > temp) {
+        if (readTemp > temp) {
           digitalWrite (ledPin, HIGH);
           Serial.print("Outside temp is hotter");
         } else {
           digitalWrite (ledPin,LOW);
         }
         //BLUE
-        if (temp > inValue) {
+        if (temp > readTemp) {
           digitalWrite (ledPin2, HIGH);
           Serial.print("Inside temp is hotter");
         } else {
           digitalWrite (ledPin2, LOW);
         }
         //Purple!
-        if (temp == inValue) {
+        if (temp == readTemp) {
           digitalWrite (ledPin2, HIGH);
           digitalWrite (ledPin, HIGH);
           Serial.print("The temps are the same");
@@ -214,15 +223,13 @@ void loop(){
         lcd.print("%");
         lcd.print(" humid");
 
-//        lcd.print("The air is ");
-//        lcd.print("%");
-//        lcd.print(" humid");
+        lcd.print("The air is ");
+        lcd.print(readHumid, DEC);
+        lcd.print("%");
+        lcd.print(" humid");
         inValue = -1;
       } else if (inValue == -1) {
-        inValue = inByte - 48; // converts from ASCII to int
-      } else {
-        inValue *= 10;
-        inValue += inByte - 48;
+        inValue = inByte;
       }
     }
   }
